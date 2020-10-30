@@ -291,7 +291,7 @@ class DynamicDecouplingSequence:
 
 
 def convert_dds_to_driven_control(
-    dynamic_decoupling_sequence: DynamicDecouplingSequence = None,
+    dynamic_decoupling_sequence: DynamicDecouplingSequence,
     maximum_rabi_rate: float = 2 * np.pi,
     maximum_detuning_rate: float = 2 * np.pi,
     minimum_segment_duration: float = 0.0,
@@ -357,12 +357,6 @@ def convert_dds_to_driven_control(
     an ArgumentsValueError.
     """
 
-    if dynamic_decoupling_sequence is None:
-        raise ArgumentsValueError(
-            "Dynamic decoupling sequence must be of " "DynamicDecoupling type.",
-            {"type(dynamic_decoupling_sequence": type(dynamic_decoupling_sequence)},
-        )
-
     if minimum_segment_duration < 0.0:
         raise ArgumentsValueError(
             "Minimum segment duration must be greater or equal to 0.",
@@ -408,22 +402,13 @@ def convert_dds_to_driven_control(
         offsets = np.append([0], offsets)
         rabi_rotations = np.append([0], rabi_rotations)
         azimuthal_angles = np.append([0], azimuthal_angles)
-        detuning_rotations = np.append([0], detuning_rotations)
+        detuning_rotations = np.append([1], detuning_rotations)
     if offsets[-1] != sequence_duration:
         offsets = np.append(offsets, [sequence_duration])
         rabi_rotations = np.append(rabi_rotations, [0])
         azimuthal_angles = np.append(azimuthal_angles, [0])
         detuning_rotations = np.append(detuning_rotations, [0])
 
-    # check that the offsets are correctly sorted in time
-    if any(np.diff(offsets) <= 0.0):
-        raise ArgumentsValueError(
-            "Pulse timing could not be properly deduced from "
-            "the sequence offsets. Make sure all offsets are "
-            "in increasing order.",
-            {"dynamic_decoupling_sequence": dynamic_decoupling_sequence},
-            extras={"offsets": offsets},
-        )
 
     offsets = offsets[np.newaxis, :]
     rabi_rotations = rabi_rotations[np.newaxis, :]
@@ -548,7 +533,7 @@ def convert_dds_to_driven_control(
 
 def _check_valid_operation(
     rabi_rotations: np.ndarray, detuning_rotations: np.ndarray
-) -> bool:
+) -> None:
     """
     Checks if there is a rabi_rotation and detuning rotation at the same
     offset.
@@ -567,7 +552,7 @@ def _check_valid_operation(
 
 def _check_maximum_rotation_rate(
     maximum_rabi_rate: float, maximum_detuning_rate: float
-):
+) -> None:
     """
     Checks if the maximum rabi and detuning rate are within valid limits.
     """
