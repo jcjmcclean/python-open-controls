@@ -292,13 +292,13 @@ class DynamicDecouplingSequence:
 
 def convert_dds_to_driven_control(
     dynamic_decoupling_sequence: DynamicDecouplingSequence,
-    maximum_rabi_rate: float = 2 * np.pi,
-    maximum_detuning_rate: float = 2 * np.pi,
+    maximum_rabi_rate: float,
+    maximum_detuning_rate: float,
     minimum_segment_duration: float = 0.0,
-    **kwargs,
+    name: Optional[str] = None,
 ) -> DrivenControl:
     r"""
-    Creates a Driven Control based on the supplied DDS and other relevant information.
+    Creates a Driven Control based on the given DDS and other relevant information.
 
     Currently, pulses that simultaneously contain Rabi and detuning rotations are not
     supported.
@@ -307,32 +307,22 @@ def convert_dds_to_driven_control(
     ----------
     dynamic_decoupling_sequence : qctrlopencontrols.DynamicDecouplingSequence
         The base DDS. Its offsets should be sorted in ascending order in time.
-    maximum_rabi_rate : float, optional
-        Maximum Rabi Rate; Defaults to 2*pi.
-        Must be greater than 0 and less or equal to UPPER_BOUND_RABI_RATE, if set.
-    maximum_detuning_rate : float, optional
-        Maximum Detuning Rate; Defaults to 2*pi.
-        Must be greater than 0 and less or equal to UPPER_BOUND_DETUNING_RATE, if set.
-    minimum_segment_duration : float, optional
+    maximum_rabi_rate : float
+        Maximum Rabi Rate, must be positive.
+    maximum_detuning_rate : float
+        Maximum detuning rate, must be positive.
+    minimum_segment_duration : float
         If set, further restricts the duration of every segment of the Driven Controls.
         Defaults to 0, in which case it does not affect the duration of the pulses.
         Must be greater or equal to 0, if set.
-    kwargs : dict, optional
-        Options to make the corresponding filter type.
-        I.e. the options for primitive are described in doc for the PrimitivePulse class.
+    name : str, optional
+        Name of the control.
 
     Returns
     -------
     DrivenControls
         The Driven Control that contains the segments
-        corresponding to the Dynamic Decoupling Sequence operation.
-
-    Raises
-    ------
-    ArgumentsValueError
-        Raised when an argument is invalid or a valid driven control cannot be
-        created from the sequence parameters, maximum rabi rate and maximum detuning
-        rate provided.
+        corresponding to the dynamic decoupling sequence operation.
 
     Notes
     -----
@@ -392,6 +382,9 @@ def convert_dds_to_driven_control(
             },
         )
 
+    if name is None:
+        name = dynamic_decoupling_sequence.name
+
     if offsets.size == 0:
         offsets = np.array([0, sequence_duration])
         rabi_rotations = np.array([0, 0])
@@ -408,7 +401,6 @@ def convert_dds_to_driven_control(
         rabi_rotations = np.append(rabi_rotations, [0])
         azimuthal_angles = np.append(azimuthal_angles, [0])
         detuning_rotations = np.append(detuning_rotations, [0])
-
 
     offsets = offsets[np.newaxis, :]
     rabi_rotations = rabi_rotations[np.newaxis, :]
@@ -482,7 +474,7 @@ def convert_dds_to_driven_control(
             azimuthal_angles=[0.0],
             detunings=[0.0],
             durations=[sequence_duration],
-            **kwargs,
+            name=name,
         )
 
     control_rabi_rates = np.zeros((operations.shape[1] * 2,))
@@ -527,7 +519,7 @@ def convert_dds_to_driven_control(
         azimuthal_angles=control_azimuthal_angles,
         detunings=control_detunings,
         durations=control_durations,
-        **kwargs,
+        name=name,
     )
 
 
