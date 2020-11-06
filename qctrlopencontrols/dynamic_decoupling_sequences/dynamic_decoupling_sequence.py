@@ -548,7 +548,6 @@ def _check_maximum_rotation_rate(
     """
     Checks if the maximum rabi and detuning rate are within valid limits.
     """
-
     # check against global parameters
     check_arguments(
         0 < maximum_rabi_rate <= UPPER_BOUND_RABI_RATE,
